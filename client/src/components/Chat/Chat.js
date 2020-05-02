@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
-import queryString from 'query-string';
-import io from "socket.io-client";
+import './Chat.css';
 
-import TextContainer from '../TextContainer/TextContainer';
-import Messages from '../Messages/Messages';
+import queryString from 'query-string';
+import React, { useEffect, useState } from 'react';
+import io from 'socket.io-client';
+
+import config from '../../config';
 import InfoBar from '../InfoBar/InfoBar';
 import Input from '../Input/Input';
-
-import './Chat.css';
+import Messages from '../Messages/Messages';
+import TextContainer from '../TextContainer/TextContainer';
 
 let socket;
 
@@ -17,7 +18,7 @@ const Chat = ({ location }) => {
   const [users, setUsers] = useState('');
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const ENDPOINT = 'https://project-chat-application.herokuapp.com/';
+  const ENDPOINT = config.apiUrl;
 
   useEffect(() => {
     const { name, room } = queryString.parse(location.search);
@@ -25,43 +26,47 @@ const Chat = ({ location }) => {
     socket = io(ENDPOINT);
 
     setRoom(room);
-    setName(name)
+    setName(name);
 
     socket.emit('join', { name, room }, (error) => {
-      if(error) {
+      if (error) {
         alert(error);
       }
     });
   }, [ENDPOINT, location.search]);
-  
+
   useEffect(() => {
-    socket.on('message', message => {
-      setMessages(messages => [ ...messages, message ]);
+    socket.on('message', (message) => {
+      setMessages((messages) => [...messages, message]);
     });
-    
-    socket.on("roomData", ({ users }) => {
+
+    socket.on('roomData', ({ users }) => {
       setUsers(users);
     });
-}, []);
+  }, []);
 
   const sendMessage = (event) => {
     event.preventDefault();
 
-    if(message) {
+    if (message) {
       socket.emit('sendMessage', message, () => setMessage(''));
     }
-  }
+  };
 
   return (
     <div className="outerContainer">
       <div className="container">
-          <InfoBar room={room} />
-          <Messages messages={messages} name={name} />
-          <Input message={message} setMessage={setMessage} sendMessage={sendMessage} />
+        <InfoBar room={room} />
+        <Messages messages={messages} name={name} />
+        <Input
+          message={message}
+          setMessage={setMessage}
+          sendMessage={sendMessage}
+        />
       </div>
-      <TextContainer users={users}/>
+      <TextContainer users={users} />
     </div>
   );
-}
+};
 
 export default Chat;
